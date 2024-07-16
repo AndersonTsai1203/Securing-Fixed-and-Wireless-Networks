@@ -37,32 +37,15 @@ def generate_ephemeral_id(): ### Task 1
     global ephemeral_id
     private_key = x25519.X25519PrivateKey.generate()
     public_key = private_key.public_key()
-    ephemeral_id = public_key.public_bytes(
-        encoding=serialization.Encoding.Raw,
-        format=serialization.PublicFormat.Raw
-    )
-    print(f"Generated EphID in byte string: {ephemeral_id}")
-
-def share_ephemeral_id(): ### Task 2
-    global secret_shares
-    shares = Shamir.split(K, N, ephemeral_id.encode())
-    secret_shares = [(i, share.hex()) for i, share in shares]
-    print(f"Generated shares: {secret_shares}")
-
-def udp_broadcast():
-    udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    udp_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-    message = b"Hello from client"
-    while True:
-        udp_socket.sendto(message, (BROADCAST_IP, BROADCAST_PORT))
-        print(f"Broadcasting message: {message.decode()}")
-        threading.Event().wait(5)
+    ephemeral_id = public_key.public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw).hex()
+    print(f"Generated EphID in hexdecimal: {ephemeral_id}") # each byte = two hexdecimal characters
 
 def tcp_connection():
     while True:
         tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         tcp_socket.connect((SERVER_IP, SERVER_PORT))
-        message = input("Enter message to send to server: ")
+        print(f"Connected to server: {SERVER_IP} : {SERVER_PORT}")
+        message = input("")
         tcp_socket.send(message.encode())
         response = tcp_socket.recv(1024).decode()
         print(f"Received from server: {response}")
