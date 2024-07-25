@@ -1,5 +1,6 @@
 import socket
 import threading
+import multiprocessing
 import sys
 import time
 from cryptography.hazmat.primitives import serialization
@@ -49,12 +50,12 @@ class DimyNode:
                               zip(secret_shares_part1, secret_shares_part2)]
         print(f"Secret share in hexdecimal: {self.secret_shares}")
 
-    def secret_share_ephemeral_id(self):  ### Combine Task 1 and Task 2
+    def secret_share_ephemeral_id(self): ### Combine Task 1 and Task 2
         self.generate_ephemeral_id()
         self.prepare_share_ephemeral_id()
         threading.Timer(EID_INTERVAL, self.secret_share_ephemeral_id).start()
 
-    def broadcast_secret_shares(self):  ### Task 3
+    def broadcast_secret_shares(self): ### Task 3
         sock = self.udp_socket
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -69,7 +70,7 @@ class DimyNode:
             print(f"Broadcasted shares: {self.secret_shares}")
             time.sleep(SHARE_INTERVAL)
 
-    def receive_secret_shares(self):  ### Task 4
+    def receive_secret_shares(self): ### Task 4
         sock = self.udp_socket
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
