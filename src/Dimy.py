@@ -3,10 +3,11 @@ import threading
 import multiprocessing
 import sys
 import time
+import random
+import hashlib
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import x25519
 from Crypto.Protocol.SecretSharing import Shamir
-import random
 
 # Constants
 EID_INTERVAL = 15  # seconds
@@ -29,6 +30,7 @@ class DimyNode:
         self.tcp_socket.connect((self.server_ip, self.server_port))
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.ephemeral_id = None
+        self.ephemeral_id_hash_parts = None
         self.secret_shares = None
 
     ### Functions ###
@@ -37,11 +39,15 @@ class DimyNode:
         public_key = private_key.public_key()
         self.ephemeral_id = public_key.public_bytes(encoding=serialization.Encoding.Raw,
                                                     format=serialization.PublicFormat.Raw).hex()
-        print(f"Generated EphID in hexdecimal: {self.ephemeral_id}")  # each byte = two hexdecimal characters
-
-    def prepare_share_ephemeral_id(self):  ### Task 2
-        share_part1 = self.ephemeral_id[:32]  # first 32 characters
-        share_part2 = self.ephemeral_id[32:]  # last 32 characters
+        print(f"Generated EphID in hexdecimal: {self.ephemeral_id}") # each byte = two hexdecimal characters
+        ephemeral_id_hash = hashlib.sha256(bytes.fromhex(self.ephemeral_id)).hexdigest()
+        # Split the hash into 5 parts (32 bytes / 5 = 6.4 bytes each, rounded to 6 bytes for simplicity)
+        self.ephemeral_id_hash_parts = [ephemeral_id_hash[i : i + 6] for i in range(0, 30, 6)]
+        print(f"Generated EphID hash in hexdecimal: {self.ephemeral_id_hash_parts}")
+    
+    def prepare_share_ephemeral_id(self): ### Task 2
+        share_part1 = self.ephemeral_id[:32] # first 32 characters
+        share_part2 = self.ephemeral_id[32:] # last 32 characters
         shares1 = Shamir.split(K, N, bytes.fromhex(share_part1))
         shares2 = Shamir.split(K, N, bytes.fromhex(share_part2))
         secret_shares_part1 = [(i, share.hex()) for i, share in shares1]
@@ -65,9 +71,9 @@ class DimyNode:
             if self.secret_shares is None:
                 continue
             index = random.randint(0, len(self.secret_shares) - 1)
-            message = f"Secret share: {self.secret_shares[index][1]}"
+            message = f"Secret share with hash part: {self.secret_shares[index][1] + self.ephemeral_id_hash_parts[index]}"
             sock.sendto(message.encode(), ('<broadcast>', self.udp_port))
-            print(f"Broadcasted shares: {self.secret_shares}")
+            print(f"Broadcasted message: {self.secret_shares[index][1] + self.ephemeral_id_hash_parts[index]}")
             time.sleep(SHARE_INTERVAL)
 
     def receive_secret_shares(self): ### Task 4
@@ -83,7 +89,7 @@ class DimyNode:
     def run(self):
         threading.Thread(target=self.secret_share_ephemeral_id).start()
         threading.Thread(target=self.broadcast_secret_shares).start()
-        threading.Thread(target=self.receive_secret_shares).start()
+        #threading.Thread(target=self.receive_secret_shares).start()
         while True:
             time.sleep(1)
 
