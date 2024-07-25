@@ -25,7 +25,7 @@ class DimyNode:
         self.udp_port = 55001
         self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcp_socket.connect((self.server_ip, self.server_port))
-        self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         self.ephemeral_id = None
         self.secret_shares = None
     
@@ -45,14 +45,15 @@ class DimyNode:
         secret_shares_part2 = [(i, share.hex()) for i, share in shares2]
         self.secret_shares = [(i, share1 + share2) for (i, share1), (_, share2) in zip(secret_shares_part1, secret_shares_part2)]
         print(f"Secret share in hexdecimal: {self.secret_shares}")
-    
+
     def secret_share_ephemeral_id(self): ### Combine Task 1 and Task 2
         self.generate_ephemeral_id()
         self.prepare_share_ephemeral_id()
         threading.Timer(EID_INTERVAL, self.secret_share_ephemeral_id).start()
-        
+
     def broadcast_secret_shares(self): ### Task 3
         sock = self.udp_socket
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         while True:
             if random.random() < 0.5:
@@ -64,19 +65,21 @@ class DimyNode:
             sock.sendto(message.encode(), ('<broadcast>', self.udp_port))
             print(f"Broadcasted shares: {self.secret_shares}")
             time.sleep(SHARE_INTERVAL)
-    
-    def receive_secret_shares(self): ### Task 4
-        sock = self.udp_socket
-        sock.bind(('', self.udp_port))
-        while True:
-            data, addr = sock.recvfrom(1024)
-            print(f"Received secret share: {data.decode()}")
-            time.sleep(SHARE_INTERVAL)
+
+    # def receive_secret_shares(self): ### Task 4
+    #     sock = self.udp_socket
+    #     sock.bind(('', self.udp_port))
+    #     while True:
+    #         data, addr = sock.recvfrom(1024)
+    #         print(f"Received secret share: {data.decode()}")
+    #         time.sleep(SHARE_INTERVAL)
+
     
     def run(self):
         threading.Thread(target=self.secret_share_ephemeral_id).start()
         threading.Thread(target=self.broadcast_secret_shares).start()
-        threading.Thread(target=self.receive_secret_shares).start()
+        # threading.Thread(target=self.receive_secret_shares).start()
+        # threading.Thread(target=self.broadcast().start())
         while True:
             time.sleep(1)
     
