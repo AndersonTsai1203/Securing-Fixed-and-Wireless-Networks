@@ -14,7 +14,7 @@ EID_INTERVAL = 15  # seconds
 SHARE_INTERVAL = 3  # seconds
 K = 3  # threshold
 N = 5  # number of shares
-BLOOM_FILTER_SIZE = 100000
+BLOOM_FILTER_SIZE = 800000
 BLOOM_FILTER_HASHES = 3
 DBF_INTERVAL = 90  # seconds
 DBF_RETENTION = 6  # keep max 6 DBFs
@@ -177,9 +177,9 @@ class DimyNode:
         # need k number of hash functions to calculate the hashes for a given input
 
         n = 1000  # no of items to add
-        p = 0.05  # false positive probability
 
-        bloomf = BloomFilter(n, p)
+
+        bloomf = BloomFilter(n)
         print("Size of bit array:{}".format(bloomf.size))
         print("False positive Probability:{}".format(bloomf.fp_prob))
         print("Number of hash functions:{}".format(bloomf.hash_count))

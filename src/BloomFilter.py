@@ -1,7 +1,3 @@
-# Python 3 program to build Bloom Filter
-# Install mmh3 and bitarray 3rd party module first
-# pip install mmh3
-# pip install bitarray
 import math
 import mmh3
 from bitarray import bitarray
@@ -13,7 +9,7 @@ class BloomFilter(object):
 	Class for Bloom filter, using murmur3 hash function
 	'''
 
-	def __init__(self, items_count):
+	def __init__(self, size, hashes):
 		'''
 		items_count : int
 			Number of items expected to be stored in bloom filter
@@ -22,10 +18,10 @@ class BloomFilter(object):
 		'''
 
 		# Size of bit array to use
-		self.size = 800000
+		self.size = size
 
 		# number of hash functions to use
-		self.hash_count = self.get_hash_count(self.size, items_count)
+		self.hash_count = hashes
 
 		# Bit array of given size
 		self.bit_array = bitarray(self.size)
@@ -63,7 +59,7 @@ class BloomFilter(object):
 				return False
 		return True
 
-	@classmethod
+	# @classmethod
 	# def get_size(self, n, p):
 	# 	'''
 	# 	Return the size of bit array(m) to used using
@@ -77,18 +73,18 @@ class BloomFilter(object):
 	# 	m = -(n * math.log(p))/(math.log(2)**2)
 	# 	return int(m)
 
-	@classmethod
-	def get_hash_count(self, m, n):
-		'''
-		Return the hash function(k) to be used using
-		following formula
-		k = (m/n) * lg(2)
-
-		m : int
-			size of bit array
-		n : int
-			number of items expected to be stored in filter
-		'''
-		k = (m/n) * math.log(2)
-		return int(k)
+	# @classmethod
+	# def get_hash_count(self, m, n):
+	# 	'''
+	# 	Return the hash function(k) to be used using
+	# 	following formula
+	# 	k = (m/n) * lg(2)
+	#
+	# 	m : int
+	# 		size of bit array
+	# 	n : int
+	# 		number of items expected to be stored in filter
+	# 	'''
+	# 	k = (m/n) * math.log(2)
+	# 	return int(k)
 
