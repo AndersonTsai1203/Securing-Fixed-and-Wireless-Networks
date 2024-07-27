@@ -194,12 +194,13 @@ class DimyNode:
         self.encounter_id = None
 
     def create_qbf(self): ## Task 8
-        # Check if there are six Daily Bloom Filters in the dbf_list
+        # Check if there are six Daily Bloom Filters in the dbf_list - need to add time condition in here too
         if len(self.dbf_list) == 6:
             # If so create a new Query Bloom Filter
             self.qbf = BloomFilter(self, BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
             for dbf in self.dbf_list:
                 self.qbf.add(dbf)
+            self.tcp_socket.send(self.qbf)
 
     def run(self):
         threading.Thread(target=self.secret_share_ephemeral_id).start()

@@ -62,32 +62,5 @@ class BloomFilter(object):
 	def bits_non_zero(self):
 		print(f"Number of non-zero bits in bloom filter: {self.bit_array.count(1)}")
 
-	# @classmethod
-	# def get_size(self, n, p):
-	# 	'''
-	# 	Return the size of bit array(m) to used using
-	# 	following formula
-	# 	m = -(n * lg(p)) / (lg(2)^2)
-	# 	n : int
-	# 		number of items expected to be stored in filter
-	# 	p : float
-	# 		False Positive probability in decimal
-	# 	'''
-	# 	m = -(n * math.log(p))/(math.log(2)**2)
-	# 	return int(m)
 
-	# @classmethod
-	# def get_hash_count(self, m, n):
-	# 	'''
-	# 	Return the hash function(k) to be used using
-	# 	following formula
-	# 	k = (m/n) * lg(2)
-	#
-	# 	m : int
-	# 		size of bit array
-	# 	n : int
-	# 		number of items expected to be stored in filter
-	# 	'''
-	# 	k = (m/n) * math.log(2)
-	# 	return int(k)
 
