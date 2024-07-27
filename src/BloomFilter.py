@@ -59,6 +59,9 @@ class BloomFilter(object):
 				return False
 		return True
 
+	def bits_non_zero(self):
+		print(f"Number of non-zero bits in bloom filter: {self.bit_array.count(1)}")
+
 	# @classmethod
 	# def get_size(self, n, p):
 	# 	'''
