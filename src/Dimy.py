@@ -7,7 +7,6 @@ from BloomFilter import BloomFilter
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import x25519
 from Crypto.Protocol.SecretSharing import Shamir
-from random import shuffle
 
 # Constants
 EID_INTERVAL = 15  # seconds
@@ -39,6 +38,7 @@ class DimyNode:
         self.bloom_count = 0
         self.dbf_list = []
         self.qbf = None
+        self.cbf = None
 
     ### Functions ###
     def generate_ephemeral_id(self):  ### Task 1
@@ -81,7 +81,7 @@ class DimyNode:
                 print(f"Broadcasted message: {self.secret_shares[index][1] + self.ephemeral_id_hash}")
                 time.sleep(SHARE_INTERVAL)
 
-    def receive_secret_shares(self):  ### Task 4
+    def receive_secret_shares(self):  ### Task 4 - combine part a, b, c
         sock = self.udp_socket
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -100,7 +100,7 @@ class DimyNode:
                 self.reconstruct_ephemeral_id()
 
     # This function removes any shares older than 9 seconds to ensure that only recent shares are considered.
-    def clear_old_shares(self):  ### Task 4
+    def clear_old_shares(self):  ### Task 4 - part a
         current_time = time.time()
         self.received_shares = [
             (share, hash_part, timestamp)
@@ -111,7 +111,7 @@ class DimyNode:
     # This function checks if there are at least 3 shares with the same hash part
     # and if the time span between the first and last of these shares is at least 9 seconds,
     # making it possible to reconstruct the EphID.
-    def can_reconstruct_ephid(self):  ### Task 4
+    def can_reconstruct_ephid(self):  ### Task 4 - part b
         hash_counts = {}
         for share, hash_part, timestamp in self.received_shares:
             if hash_part not in hash_counts:
@@ -125,7 +125,7 @@ class DimyNode:
                     return True
         return False
 
-    def reconstruct_ephemeral_id(self):  ### Task 4
+    def reconstruct_ephemeral_id(self):  ### Task 4 - part c
         # Show nodes attempting reconstruction of EphID
         print("Attempting to reconstruct EphID from received shares...")
 
@@ -200,8 +200,39 @@ class DimyNode:
             self.qbf = BloomFilter(self, BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
             for dbf in self.dbf_list:
                 self.qbf.add(dbf)
-            self.tcp_socket.send(self.qbf)
+            # self.tcp_socket.send(self.qbf)
+    
+    def send_qbf_to_server(self):  ## Task 9
+        if self.qbf is None:
+            print("No QBF to send.")
+            return
+        qbf_data = self.qbf.to_bytes()
+        self.tcp_socket.sendall(qbf_data)
+        response = self.tcp_socket.recv(1024)
+        print(f"Server response for QBF: {response.decode()}")
 
+    def create_and_send_qbf(self):  ## Task 9
+        self.create_qbf()
+        self.send_qbf_to_server()
+
+    def create_cbf(self):  ## Task 10
+        self.cbf = BloomFilter(BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
+        for dbf in self.dbf_list:
+            self.cbf.add(dbf)
+
+    def send_cbf_to_server(self):  ## Task 10
+        if self.cbf is None:
+            print("No CBF to send.")
+            return
+        cbf_data = self.cbf.to_bytes()
+        self.tcp_socket.sendall(cbf_data)
+        response = self.tcp_socket.recv(1024)
+        print(f"Server response for CBF: {response.decode()}")
+
+    def create_and_send_cbf(self):  ## Task 10
+        self.create_cbf()
+        self.send_cbf_to_server()
+    
     def run(self):
         threading.Thread(target=self.secret_share_ephemeral_id).start()
         threading.Thread(target=self.broadcast_secret_shares).start()
