@@ -39,6 +39,7 @@ class DimyNode:
         self.dbf_list = []
         self.qbf = None
         self.cbf = None
+        self.first = True
 
     ### Functions ###
     def generate_ephemeral_id(self):  ### Task 1
@@ -161,6 +162,8 @@ class DimyNode:
         self.create_dbf()
         # Encode EncID into the Daily Bloom Filter
         self.add_encounter_id()
+        # Create and send daily Query Bloom Filter
+        self.create_and_send_qbf()
 
     def can_create_new_dbf(self):  ### Task 7
         hash_counts = {}
@@ -173,17 +176,20 @@ class DimyNode:
             if len(shares) >= 3:
                 timestamps = [timestamp for _, timestamp in shares]
                 if max(timestamps) - min(timestamps) >= 90:
-                    print("New Daily Bloom Filter created.")
                     return True
         return False
 
-    def create_dbf(self):  ## Task 6
-        if self.can_create_new_dbf():
+    def create_dbf(self):  ### Task 6
+        if self.first:
+            self.dbf = BloomFilter(self, BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
+            print("New Daily Bloom Filter created.")
+        elif self.can_create_new_dbf():
             self.dbf_list.append(self.dbf)
             self.create_qbf()
             self.dbf = BloomFilter(self, BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
+            print("New Daily Bloom Filter created.")
 
-    def add_encounter_id(self):  ## Task 6
+    def add_encounter_id(self):  ### Task 6
         self.dbf.add(self.encounter_id)
         # Print number of encounter IDs that have been encoded in bloom filter
         self.bloom_count += 1
@@ -193,14 +199,28 @@ class DimyNode:
         # Delete Encounter ID
         self.encounter_id = None
 
+    def can_create_new_qbf(self):  ### Task 8
+        hash_counts = {}
+        for share, hash_part, timestamp in self.received_shares:
+            if hash_part not in hash_counts:
+                hash_counts[hash_part] = []
+            hash_counts[hash_part].append((share, timestamp))
+
+        for hash_part, shares in hash_counts.items():
+            if len(shares) >= 3:
+                timestamps = [timestamp for _, timestamp in shares]
+                if max(timestamps) - min(timestamps) >= 540:
+                    return True
+        return False
+
     def create_qbf(self): ## Task 8
-        # Check if there are six Daily Bloom Filters in the dbf_list - need to add time condition in here too
-        if len(self.dbf_list) == 6:
+        # Check if there are six Daily Bloom Filters in the dbf_list
+        if len(self.dbf_list) == 6 and self.can_create_new_qbf():
             # If so create a new Query Bloom Filter
             self.qbf = BloomFilter(self, BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
             for dbf in self.dbf_list:
                 self.qbf.add(dbf)
-            # self.tcp_socket.send(self.qbf)
+
     
     def send_qbf_to_server(self):  ## Task 9
         if self.qbf is None:
