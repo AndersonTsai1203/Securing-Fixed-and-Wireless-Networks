@@ -23,6 +23,7 @@ QBF_INTERVAL = 540  # seconds (9 minutes)
 
 class DimyNode:
     def __init__(self, server_ip, server_port):
+        self.reconstructed_ephid = None
         self.server_ip = server_ip
         self.server_port = server_port
         self.udp_port = 55001
@@ -38,7 +39,6 @@ class DimyNode:
         self.used_shares = []
         self.reconstructed_ephemeral_id = 0
         self.reconstructed_ephemeral_id_hash = 0
-        self.encounter_ephid = None
         self.encounter_id = None
         self.dbf = None
         self.bloom_count = 0
@@ -137,11 +137,12 @@ class DimyNode:
             # Reconstruct EphID from shares
             binary_shares = [bytes.fromhex(share) for share in self.received_shares]
             shares = [Share.from_bytes(share) for share in binary_shares]
-            reconstructed_ephid = recover_secret(shares[:K])
-            self.reconstructed_ephemeral_id = reconstructed_ephid.hex()
-            reconstructed_ephid_hash = hashlib.sha256(reconstructed_ephid).hexdigest()
+            self.reconstructed_ephid = recover_secret(shares[:K])
+            self.reconstructed_ephemeral_id = self.reconstructed_ephid.hex()
+            reconstructed_ephid_hash = hashlib.sha256(self.reconstructed_ephid).hexdigest()
             print(f"Reconstructed EphID: {self.reconstructed_ephemeral_id}")
             if reconstructed_ephid_hash == self.received_hash:
+                self.perform_ecdh()
                 print(f"Verification successful")
                 self.clear_used_shares()
                 return
@@ -155,7 +156,7 @@ class DimyNode:
     def perform_ecdh(self):  ### Task 5
         # Generate a shared key (an Encounter ID)
         private_key = x25519.X25519PrivateKey.generate()
-        self.encounter_id = private_key.exchange(self.encounter_ephid)
+        self.encounter_id = private_key.exchange(x25519.X25519PublicKey.from_public_bytes(self.reconstructed_ephid))
         # Show nodes have generated an Encounter ID
         print(f"Generated EncID: {self.encounter_id.hex()}")
         # Create a new bloom filter if required
