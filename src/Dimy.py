@@ -152,7 +152,6 @@ class DimyNode:
         else:
             print("Insufficient number of shares to reconstruct EphID...")
             return
-          
         
     def perform_ecdh(self):  ### Task 5
         # Generate a shared key (an Encounter ID)
@@ -221,7 +220,6 @@ class DimyNode:
             self.qbf = BloomFilter(self, BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
             for dbf in self.dbf_list:
                 self.qbf.add(dbf)
-
     
     def send_qbf_to_server(self):  ## Task 9
         if self.qbf is None:
@@ -260,7 +258,6 @@ class DimyNode:
         threading.Thread(target=self.receive_secret_shares).start()
         while True:
             time.sleep(1)
-
 
 if __name__ == "__main__":
     client = DimyNode("127.0.0.1", 55000)
