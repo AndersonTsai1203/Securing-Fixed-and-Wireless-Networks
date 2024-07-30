@@ -7,6 +7,7 @@ from BloomFilter import BloomFilter
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import x25519
 from Crypto.Protocol.SecretSharing import Shamir
+from subrosa import split_secret, recover_secret, Share
 
 # Constants
 EID_INTERVAL = 15  # seconds
@@ -28,10 +29,15 @@ class DimyNode:
         self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcp_socket.connect((self.server_ip, self.server_port))
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        self.ephemeral_id = None
-        self.ephemeral_id_hash = None
-        self.secret_shares = None
+        self.ephemeral_id = 0 # in hexdecimal
+        self.ephemeral_id_hash = 0 # in hexdecimal
+        self.secret_shares = [] # a list of shares in hexdecimal
+        self.received_data = []
         self.received_shares = []
+        self.received_hash = []
+        self.used_shares = []
+        self.reconstructed_ephemeral_id = 0
+        self.reconstructed_ephemeral_id_hash = 0
         self.encounter_ephid = None
         self.encounter_id = None
         self.dbf = None
@@ -51,14 +57,9 @@ class DimyNode:
         print(f"Generated EphID hash in hexdecimal: {self.ephemeral_id_hash}")
 
     def prepare_share_ephemeral_id(self):  ### Task 2
-        share_part1 = self.ephemeral_id[:32]  # first 32 characters
-        share_part2 = self.ephemeral_id[32:]  # last 32 characters
-        shares1 = Shamir.split(K, N, bytes.fromhex(share_part1))
-        shares2 = Shamir.split(K, N, bytes.fromhex(share_part2))
-        secret_shares_part1 = [(i, share.hex()) for i, share in shares1]
-        secret_shares_part2 = [(i, share.hex()) for i, share in shares2]
-        self.secret_shares = [(i, share1 + share2) for (i, share1), (_, share2) in
-                              zip(secret_shares_part1, secret_shares_part2)]
+        ephemeral_id_bytes = bytes.fromhex(self.ephemeral_id)
+        shares = split_secret(ephemeral_id_bytes, K, N)
+        self.secret_shares = [bytes(share).hex() for share in shares]
         print(f"Secret share in hexdecimal: {self.secret_shares}")
 
     def secret_share_ephemeral_id(self):  ### Combine Task 1 and Task 2
@@ -71,15 +72,16 @@ class DimyNode:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         while True:
-            if random.random() < 0.5:
-                time.sleep(SHARE_INTERVAL)
-                continue
-            if self.secret_shares is not None and self.ephemeral_id_hash is not None:
-                index = random.randint(0, N - 1)
-                message = f"{self.secret_shares[index][1] + self.ephemeral_id_hash}"
-                sock.sendto(message.encode(), ('<broadcast>', self.udp_port))
-                print(f"Broadcasted message: {self.secret_shares[index][1] + self.ephemeral_id_hash}")
-                time.sleep(SHARE_INTERVAL)
+            for index in range(len(self.secret_shares)):
+                probability = random.uniform(0, 1)
+                if probability < 0.5:
+                    time.sleep(SHARE_INTERVAL)
+                    continue
+                else:
+                    message = f"{self.secret_shares[index] + self.ephemeral_id_hash}"
+                    sock.sendto(message.encode(), ('<broadcast>', self.udp_port))
+                    print(f"Broadcasted message: {self.secret_shares[index] + self.ephemeral_id_hash}")
+                    time.sleep(SHARE_INTERVAL)
 
     def receive_secret_shares(self):  ### Task 4 - combine part a, b, c
         sock = self.udp_socket
@@ -89,72 +91,70 @@ class DimyNode:
         while True:
             data, _ = sock.recvfrom(1024)
             message = data.decode()
-            received_ephID = message[:64]
-            received_ephID_hash = message[64:]
-            print(f"Received EphID: {message[:64]}")
-            print(f"Received EphID hash parts: {message[64:]}")
-            timestamp = time.time()
-            self.received_shares.append((received_ephID, received_ephID_hash, timestamp))
-            self.clear_old_shares()
-            if self.can_reconstruct_ephid():
-                self.reconstruct_ephemeral_id()
+            received_secret_share = message[:70]
+            received_secret_hash = message[70:]
+            if received_secret_hash == self.ephemeral_id_hash:
+                continue
+            else:
+                print(f"Received secret share: {received_secret_share}")
+                print(f"Received hash: {received_secret_hash}")
+                timestamp = time.time()
+                self.received_data.append((received_secret_share, received_secret_hash, timestamp))
+                if self.can_reconstruct_ephid():
+                    self.reconstruct_ephemeral_id()
 
-    # This function removes any shares older than 9 seconds to ensure that only recent shares are considered.
-    def clear_old_shares(self):  ### Task 4 - part a
-        current_time = time.time()
-        self.received_shares = [
-            (share, hash_part, timestamp)
-            for share, hash_part, timestamp in self.received_shares
-            if current_time - timestamp <= 9
-        ]
+    def clear_used_shares(self):  ### Task 4 - part a
+        for used_share in self.used_shares:
+            self.received_shares.remove(used_share)
 
     # This function checks if there are at least 3 shares with the same hash part
     # and if the time span between the first and last of these shares is at least 9 seconds,
     # making it possible to reconstruct the EphID.
     def can_reconstruct_ephid(self):  ### Task 4 - part b
         hash_counts = {}
-        for share, hash_part, timestamp in self.received_shares:
-            if hash_part not in hash_counts:
-                hash_counts[hash_part] = []
-            hash_counts[hash_part].append((share, timestamp))
-
-        for hash_part, shares in hash_counts.items():
+        for share, hash, timestamp in self.received_data:
+            if hash not in hash_counts:
+                hash_counts[hash] = []
+            hash_counts[hash].append((share, timestamp))
+            
+        for hash, shares in hash_counts.items():
             if len(shares) >= 3:
                 timestamps = [timestamp for _, timestamp in shares]
+                received_shares = [share for share, _ in shares]
                 if max(timestamps) - min(timestamps) >= 9:
+                    self.received_hash = hash
+                    self.received_shares = received_shares
+                    self.used_shares = received_shares
                     return True
         return False
 
     def reconstruct_ephemeral_id(self):  ### Task 4 - part c
         # Show nodes attempting reconstruction of EphID
         print("Attempting to reconstruct EphID from received shares...")
-
         # Collect at least 3 shares with matching same EphID hash
-        hash_part_counts = {}
-        for share, hash_part, timestamp in self.received_shares:
-            if hash_part not in hash_part_counts:
-                hash_part_counts[hash_part] = []
-            hash_part_counts[hash_part].append(share)
-
-        for hash_part, shares in hash_part_counts.items():
-            if len(shares) >= 3:
-                # Reconstruct EphID from shares
-                self.encounter_ephid = Shamir.reconstruct_secret(shares[:3])
-                ephid_hash = hashlib.sha256(self.encounter_ephid).digest()
-                # Show nodes verifying the re-constructed EphID
-                print(f"Verifying reconstructed EphID: {self.encounter_ephid.hex()}")
-                # Verify the reconstructed EphID hash
-                if ephid_hash[:6] == hash_part:
-                    print(f"Reconstructed EphID successfully verified with hash: {ephid_hash.hex()}")
-                    self.perform_ecdh()
-                else:
-                    print("EphID verification failed. Hash does not match.")
+        if len(self.received_shares) >= K:
+            # Reconstruct EphID from shares
+            binary_shares = [bytes.fromhex(share) for share in self.received_shares]
+            shares = [Share.from_bytes(share) for share in binary_shares]
+            reconstructed_ephid = recover_secret(shares[:K])
+            self.reconstructed_ephemeral_id = reconstructed_ephid.hex()
+            reconstructed_ephid_hash = hashlib.sha256(reconstructed_ephid).hexdigest()
+            print(f"Reconstructed EphID: {self.reconstructed_ephemeral_id}")
+            if reconstructed_ephid_hash == self.received_hash:
+                print(f"Verification successful")
+                self.clear_used_shares()
                 return
-        print("Insufficient valid shares received for EphID reconstruction.")
-
+            else:
+                print(f"Verification failed")
+        else:
+            print("Insufficient number of shares to reconstruct EphID...")
+            return
+          
+        
     def perform_ecdh(self):  ### Task 5
         # Generate a shared key (an Encounter ID)
-        self.encounter_id = self.private_key.exchange(self.encounter_ephid)
+        private_key = x25519.X25519PrivateKey.generate()
+        self.encounter_id = private_key.exchange(self.encounter_ephid)
         # Show nodes have generated an Encounter ID
         print(f"Generated EncID: {self.encounter_id.hex()}")
         # Create a new bloom filter if required
