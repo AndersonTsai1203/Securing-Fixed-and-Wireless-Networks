@@ -30,7 +30,8 @@ class DimyNode:
         self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcp_socket.connect((self.server_ip, self.server_port))
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        self.ephemeral_id = 0 # in hexdecimal
+        self.private_key = 0
+        self.ephemeral_id = 0 # in hexdecimal = public key
         self.ephemeral_id_hash = 0 # in hexdecimal
         self.secret_shares = [] # a list of shares in hexdecimal
         self.received_data = []
@@ -49,8 +50,8 @@ class DimyNode:
 
     ### Functions ###
     def generate_ephemeral_id(self):  ### Task 1
-        private_key = x25519.X25519PrivateKey.generate()
-        public_key = private_key.public_key()
+        self.private_key = x25519.X25519PrivateKey.generate()
+        public_key = self.private_key.public_key()
         self.ephemeral_id = public_key.public_bytes(encoding=serialization.Encoding.Raw,
                                                     format=serialization.PublicFormat.Raw).hex()
         print(f"Generated EphID in hexdecimal: {self.ephemeral_id}")  # each byte = two hexdecimal characters
@@ -155,8 +156,7 @@ class DimyNode:
         
     def perform_ecdh(self):  ### Task 5
         # Generate a shared key (an Encounter ID)
-        private_key = x25519.X25519PrivateKey.generate()
-        self.encounter_id = private_key.exchange(x25519.X25519PublicKey.from_public_bytes(self.reconstructed_ephid))
+        self.encounter_id = self.private_key.exchange(x25519.X25519PublicKey.from_public_bytes(self.reconstructed_ephid))
         # Show nodes have generated an Encounter ID
         print(f"Generated EncID: {self.encounter_id.hex()}")
         # Create a new bloom filter if required
