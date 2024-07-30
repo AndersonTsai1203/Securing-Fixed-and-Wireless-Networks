@@ -182,12 +182,12 @@ class DimyNode:
 
     def create_dbf(self):  ### Task 6
         if self.first:
-            self.dbf = BloomFilter(self, BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
+            self.dbf = BloomFilter(BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
             print("New Daily Bloom Filter created.")
         elif self.can_create_new_dbf():
             self.dbf_list.append(self.dbf)
             self.create_qbf()
-            self.dbf = BloomFilter(self, BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
+            self.dbf = BloomFilter(BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
             print("New Daily Bloom Filter created.")
 
     def add_encounter_id(self):  ### Task 6
