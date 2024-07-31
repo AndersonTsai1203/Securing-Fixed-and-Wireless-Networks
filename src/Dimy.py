@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import x25519
 from Crypto.Protocol.SecretSharing import Shamir
 from subrosa import split_secret, recover_secret, Share
+import keyboard
 
 # Constants
 EID_INTERVAL = 15  # seconds
@@ -187,6 +188,7 @@ class DimyNode:
             self.dbf_list.append(self.dbf)
             self.create_qbf()
             self.dbf = BloomFilter(BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
+            self.bloom_count = 0
             print("New Daily Bloom Filter created.")
 
     def add_encounter_id(self):  ### Task 6
@@ -209,7 +211,7 @@ class DimyNode:
         for hash_part, shares in hash_counts.items():
             if len(shares) >= 3:
                 timestamps = [timestamp for _, timestamp in shares]
-                if max(timestamps) - min(timestamps) >= 540:
+                if max(timestamps) - min(timestamps) >= 20:  ## should be 540 - 20 for testing purposes
                     return True
         return False
 
@@ -225,7 +227,7 @@ class DimyNode:
         if self.qbf is None:
             print("No QBF to send.")
             return
-        qbf_data = self.qbf.to_bytes()
+        qbf_data = {"type": 'qbf', "data": self.qbf.to_bytes()}
         self.tcp_socket.sendall(qbf_data)
         response = self.tcp_socket.recv(1024)
         print(f"Server response for QBF: {response.decode()}")
@@ -243,19 +245,26 @@ class DimyNode:
         if self.cbf is None:
             print("No CBF to send.")
             return
-        cbf_data = self.cbf.to_bytes()
+        cbf_data = {"type": 'cbf', "data": self.cbf.to_bytes()}
         self.tcp_socket.sendall(cbf_data)
         response = self.tcp_socket.recv(1024)
         print(f"Server response for CBF: {response.decode()}")
 
     def create_and_send_cbf(self):  ## Task 10
-        self.create_cbf()
-        self.send_cbf_to_server()
+        while True:
+            try:
+                if keyboard.is_pressed('c'):
+                    print('Covid detected')
+                    self.create_cbf()
+                    self.send_cbf_to_server()
+            except:
+                break
     
     def run(self):
         threading.Thread(target=self.secret_share_ephemeral_id).start()
         threading.Thread(target=self.broadcast_secret_shares).start()
         threading.Thread(target=self.receive_secret_shares).start()
+        threading.Thread(target=self.create_and_send_cbf()).start()
         while True:
             time.sleep(1)
 
