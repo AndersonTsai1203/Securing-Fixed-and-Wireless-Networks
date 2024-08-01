@@ -276,6 +276,7 @@ class DimyNode:
                 print('Covid detected')
                 self.create_cbf()
                 self.send_cbf_to_server()
+                time.sleep(5)
 
     
     def run(self):
