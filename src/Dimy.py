@@ -282,7 +282,7 @@ class DimyNode:
         threading.Thread(target=self.secret_share_ephemeral_id).start()
         threading.Thread(target=self.broadcast_secret_shares).start()
         threading.Thread(target=self.receive_secret_shares).start()
-        threading.Thread(target=self.create_and_send_cbf()).start()
+        threading.Thread(target=self.create_and_send_cbf).start()
         while True:
             time.sleep(1)
 
