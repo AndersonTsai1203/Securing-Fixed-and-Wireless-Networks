@@ -250,8 +250,16 @@ class DimyNode:
         if self.cbf is None:
             print("No CBF to send.")
             return
-        cbf_data = {"type": 'cbf', "data": self.cbf.to_bytes()}
-        self.tcp_socket.sendall(pickle.dumps(cbf_data))
+        cbf_data = {"type": 'cbf', "data": self.cbf}
+        cbf_package = pickle.dumps(cbf_data)
+        # get the length of the pickled object
+        length = len(cbf_package)
+        # convert into a fixed width string
+        length = str(length).rjust(8, '0')
+        # send the length of the object we will send
+        self.tcp_socket.sendall(bytes(length, 'utf-8'))
+        # send the object
+        self.tcp_socket.sendall(cbf_package)
         response = self.tcp_socket.recv(1024)
         print(f"Server response for CBF: {response.decode()}")
 
