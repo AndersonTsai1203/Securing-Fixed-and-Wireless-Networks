@@ -65,5 +65,13 @@ class BloomFilter(object):
 	def to_bytes(self):
 		return self.bit_array.tobytes()
 
+	def compare(self, qbf):
+		intersection = self.bit_array & qbf.bit_array
+		t = intersection.bit_array.count(1)
+		if t < 3:
+			return False
+		elif t >= 3:
+			return True
+
 
 
