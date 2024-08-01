@@ -267,12 +267,13 @@ class DimyNode:
         response = self.tcp_socket.recv(1024)
         print(f"Server response for CBF: {response.decode()}")
         # Set covid positive to true and stop sending QBFs
-        if response.decode() == 'Match':
-            self.covid_positive = True
+        
+
 
     def create_and_send_cbf(self):  ## Task 10
         while True:
             if keyboard.is_pressed('c'):
+                self.covid_positive = True
                 print('Covid detected')
                 self.create_cbf()
                 self.send_cbf_to_server()
