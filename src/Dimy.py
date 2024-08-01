@@ -222,8 +222,18 @@ class DimyNode:
         if self.qbf is None:
             print("No QBF to send.")
             return
-        qbf_data = {"type": 'qbf', "data": self.qbf.to_bytes()}
-        self.tcp_socket.sendall(pickle.dumps(qbf_data))
+        qbf_data = {"type": 'qbf', "data": self.qbf}
+        qbf_package = pickle.dumps(qbf_data)
+
+        # get the length of the pickled object
+        length = len(qbf_package)
+        # convert into a fixed width string
+        length = str(length).rjust(8, '0')
+        # send the length of the object we will send
+        self.tcp_socket.sendall(bytes(length, 'utf-8'))
+        # send the object
+        self.tcp_socket.sendall(qbf_package)
+
         response = self.tcp_socket.recv(1024)
         print(f"Server response for QBF: {response.decode()}")
 
