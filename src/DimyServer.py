@@ -6,7 +6,9 @@ from BloomFilter import BloomFilter
 # Server address
 SERVER_IP = '127.0.0.1'
 SERVER_PORT = 55000
-global cbf
+
+# List of CBFs
+cbf_list = []
 
 # List to keep track of client connections
 clients = []
@@ -48,13 +50,15 @@ def handle_client(client_socket):
             if deserialized_message["type"] == "cbf":
                 print(f"Received CBF from client: {deserialized_message['data']}")
                 cbf = deserialized_message["data"]
+                cbf_list.append(cbf)
             if deserialized_message["type"] == "qbf":
                 print(f"Received QBF from client: {deserialized_message['data']}")
                 try:
-                    if cbf.compare(deserialized_message["data"]):
-                        client_socket.send("Match".encode())
-                    elif cbf.compare(deserialized_message["data"]):
-                        client_socket.send("No match".encode())
+                    for cbf in cbf_list:
+                        if cbf.compare(deserialized_message["data"]):
+                            client_socket.send("Match".encode())
+                        elif cbf.compare(deserialized_message["data"]):
+                            client_socket.send("No match".encode())
                 except:
                     client_socket.send("No cbf".encode())
             if deserialized_message["type"] == "":
