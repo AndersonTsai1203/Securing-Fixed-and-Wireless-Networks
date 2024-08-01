@@ -9,6 +9,7 @@ from cryptography.hazmat.primitives.asymmetric import x25519
 from Crypto.Protocol.SecretSharing import Shamir
 from subrosa import split_secret, recover_secret, Share
 import keyboard
+import pickle
 
 # Constants
 EID_INTERVAL = 15  # seconds
@@ -222,7 +223,7 @@ class DimyNode:
             print("No QBF to send.")
             return
         qbf_data = {"type": 'qbf', "data": self.qbf.to_bytes()}
-        self.tcp_socket.sendall(qbf_data)
+        self.tcp_socket.sendall(pickle.dumps(qbf_data))
         response = self.tcp_socket.recv(1024)
         print(f"Server response for QBF: {response.decode()}")
 
@@ -240,7 +241,7 @@ class DimyNode:
             print("No CBF to send.")
             return
         cbf_data = {"type": 'cbf', "data": self.cbf.to_bytes()}
-        self.tcp_socket.sendall(cbf_data)
+        self.tcp_socket.sendall(pickle.dumps(cbf_data))
         response = self.tcp_socket.recv(1024)
         print(f"Server response for CBF: {response.decode()}")
 

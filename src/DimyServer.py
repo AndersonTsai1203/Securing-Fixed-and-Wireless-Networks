@@ -1,3 +1,4 @@
+import pickle
 import socket
 import threading
 from BloomFilter import BloomFilter
@@ -13,7 +14,8 @@ clients = []
 def handle_client(client_socket):
     while True:
         try:
-            message = client_socket.recv(1024).decode()
+            message = client_socket.recv(1024)
+            message = pickle.dumps(message)
             if message.type == "cbf":
                 print(f"Received CBF from client: {message.data}")
                 global cbf
