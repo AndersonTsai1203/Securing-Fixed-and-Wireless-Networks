@@ -24,6 +24,8 @@ QBF_INTERVAL = 540  # seconds (9 minutes)
 
 class DimyNode:
     def __init__(self, server_ip, server_port):
+        self.first_qbf = True
+        self.time_when_qbf_created = None
         self.reconstructed_ephid = None
         self.server_ip = server_ip
         self.server_port = server_port
@@ -197,16 +199,22 @@ class DimyNode:
         self.encounter_id = None
 
     def can_create_new_qbf(self):  ### Task 8
-        time_elapsed = time.time() - self.time_when_dbf_created
-        if time_elapsed >= 90:  ##needs to be 540
-            return True
+        if self.first_qbf:
+            time_elapsed = time.time() - self.time_when_dbf_created
+            self.first_qbf = False
+            if time_elapsed >= 90:  ##needs to be 540
+                return True
+        else:
+            time_elapsed = time.time() - self.time_when_qbf_created
+            if time_elapsed >= 90:  ##needs to be 540
+                return True
         return False
 
     def create_qbf(self): ## Task 8
         # Check if there are six Daily Bloom Filters in the dbf_list
         if self.can_create_new_qbf():
             # If so create a new Query Bloom Filter
-            self.qbf = BloomFilter(self, BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
+            self.qbf = BloomFilter(BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
             for dbf in self.dbf_list:
                 self.qbf.add(dbf)
     
