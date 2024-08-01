@@ -25,6 +25,7 @@ QBF_INTERVAL = 540  # seconds (9 minutes)
 
 class DimyNode:
     def __init__(self, server_ip, server_port):
+        self.covid_positive = False
         self.first_qbf = True
         self.time_when_qbf_created = None
         self.reconstructed_ephid = None
@@ -238,6 +239,9 @@ class DimyNode:
         print(f"Server response for QBF: {response.decode()}")
 
     def create_and_send_qbf(self):  ## Task 9
+        if self.covid_positive:
+            print("Covid positive. QBFs will cease to be sent.")
+            return
         self.create_qbf()
         self.send_qbf_to_server()
 
@@ -262,6 +266,9 @@ class DimyNode:
         self.tcp_socket.sendall(cbf_package)
         response = self.tcp_socket.recv(1024)
         print(f"Server response for CBF: {response.decode()}")
+        # Set covid positive to true and stop sending QBFs
+        if response.decode() == 'Match':
+            self.covid_positive = True
 
     def create_and_send_cbf(self):  ## Task 10
         while True:
