@@ -199,14 +199,13 @@ class DimyNode:
         self.encounter_id = None
 
     def can_create_new_qbf(self):  ### Task 8
-        if self.first_qbf:
+        if self.time_when_qbf_created is None:
             time_elapsed = time.time() - self.time_when_dbf_created
-            self.first_qbf = False
-            if time_elapsed >= 90:  ##needs to be 540
+            if time_elapsed >= 30:  ##needs to be 540
                 return True
         else:
             time_elapsed = time.time() - self.time_when_qbf_created
-            if time_elapsed >= 90:  ##needs to be 540
+            if time_elapsed >= 30:  ##needs to be 540
                 return True
         return False
 
