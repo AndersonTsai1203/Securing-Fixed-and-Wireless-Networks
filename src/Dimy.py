@@ -271,13 +271,13 @@ class DimyNode:
 
 
     def create_and_send_cbf(self):  ## Task 10
-        while True:
-            if keyboard.is_pressed('c'):
+         while True:
+            key = input("").strip()
+            if key.lower() == 'c':
                 self.covid_positive = True
                 print('Covid detected')
                 self.create_cbf()
                 self.send_cbf_to_server()
-                time.sleep(5)
 
     
     def run(self):
