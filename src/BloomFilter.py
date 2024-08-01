@@ -59,7 +59,7 @@ class BloomFilter(object):
 		return True
 
 	def bits_non_zero(self):
-		print(f"Number of non-zero bits in bloom filter: {self.bit_array.count(1)}")
+		print(f"Number of non-zero bits in DBF: {self.bit_array.count(1)}")
 
 	def to_bytes(self):
 		return self.bit_array.tobytes()

@@ -56,8 +56,10 @@ def handle_client(client_socket):
                 try:
                     for cbf in cbf_list:
                         if cbf.compare(deserialized_message["data"]):
+                            print("Match") # Segment 10C
                             client_socket.send("Match".encode())
                         else:
+                            print("No match") # Segment 10C
                             client_socket.send("No match".encode())
                 except:
                     client_socket.send("No cbf".encode())
