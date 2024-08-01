@@ -184,6 +184,7 @@ class DimyNode:
         if self.first:
             self.dbf = BloomFilter(BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
             print("New Daily Bloom Filter created.")
+            self.first = False
         elif self.can_create_new_dbf():
             self.dbf_list.append(self.dbf)
             self.create_qbf()
