@@ -244,7 +244,7 @@ class DimyNode:
     def create_cbf(self):  ## Task 10
         self.cbf = BloomFilter(BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
         for dbf in self.dbf_list:
-            self.cbf.add(dbf)
+            self.cbf.add(dbf.to_bytes())
 
     def send_cbf_to_server(self):  ## Task 10
         if self.cbf is None:
@@ -265,13 +265,11 @@ class DimyNode:
 
     def create_and_send_cbf(self):  ## Task 10
         while True:
-            try:
-                if keyboard.is_pressed('c'):
-                    print('Covid detected')
-                    self.create_cbf()
-                    self.send_cbf_to_server()
-            except:
-                break
+            if keyboard.is_pressed('c'):
+                print('Covid detected')
+                self.create_cbf()
+                self.send_cbf_to_server()
+
     
     def run(self):
         threading.Thread(target=self.secret_share_ephemeral_id).start()
