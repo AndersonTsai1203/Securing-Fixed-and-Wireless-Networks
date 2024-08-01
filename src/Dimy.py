@@ -197,22 +197,14 @@ class DimyNode:
         self.encounter_id = None
 
     def can_create_new_qbf(self):  ### Task 8
-        hash_counts = {}
-        for share, hash_part, timestamp in self.received_data:
-            if hash_part not in hash_counts:
-                hash_counts[hash_part] = []
-            hash_counts[hash_part].append((share, timestamp))
-
-        for hash_part, shares in hash_counts.items():
-            if len(shares) >= 3:
-                timestamps = [timestamp for _, timestamp in shares]
-                if max(timestamps) - min(timestamps) >= 20:  ## should be 540 - 20 for testing purposes
-                    return True
+        time_elapsed = time.time() - self.time_when_dbf_created
+        if time_elapsed >= 90:  ##needs to be 540
+            return True
         return False
 
     def create_qbf(self): ## Task 8
         # Check if there are six Daily Bloom Filters in the dbf_list
-        if len(self.dbf_list) == 6 and self.can_create_new_qbf():
+        if self.can_create_new_qbf():
             # If so create a new Query Bloom Filter
             self.qbf = BloomFilter(self, BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
             for dbf in self.dbf_list:
