@@ -1,7 +1,6 @@
 import socket
 import threading
-
-from src.BloomFilter import BloomFilter
+from BloomFilter import BloomFilter
 
 # Server address
 SERVER_IP = '127.0.0.1'
@@ -10,7 +9,6 @@ global cbf
 
 # List to keep track of client connections
 clients = []
-
 
 def handle_client(client_socket):
     while True:
@@ -34,7 +32,6 @@ def handle_client(client_socket):
             break
     client_socket.close()
 
-
 def start_server():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((SERVER_IP, SERVER_PORT))
@@ -47,7 +44,6 @@ def start_server():
         clients.append(client_socket)
         client_handler = threading.Thread(target=handle_client, args=(client_socket,))
         client_handler.start()
-
 
 if __name__ == "__main__":
     start_server()
