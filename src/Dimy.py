@@ -48,7 +48,7 @@ class DimyNode:
         self.qbf = None
         self.cbf = None
         self.first = True
-        self.time_since_dbf_created = ''
+        self.time_when_dbf_created = ''
 
     ### Functions ###
     def generate_ephemeral_id(self):  ### Task 1
@@ -168,14 +168,15 @@ class DimyNode:
         self.create_and_send_qbf()
 
     def can_create_new_dbf(self):  ### Task 7
-        if self.time_since_dbf_created - time.time() >= 20: ##neeeds to be 90
+        time_elapsed = time.time() - self.time_when_dbf_created
+        if time_elapsed >= 20: ##needs to be 90
             return True
         return False
 
     def create_dbf(self):  ### Task 6
         if self.first:
             self.dbf = BloomFilter(BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
-            self.time_since_dbf_created = time.time()
+            self.time_when_dbf_created = time.time()
             print("New Daily Bloom Filter created.")
             self.first = False
         elif self.can_create_new_dbf():
