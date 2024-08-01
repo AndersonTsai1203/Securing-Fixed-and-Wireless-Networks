@@ -14,21 +14,21 @@ clients = []
 def handle_client(client_socket):
     while True:
         try:
-            message = client_socket.recv(1024)
-            message = pickle.dumps(message)
-            if message.type == "cbf":
-                print(f"Received CBF from client: {message.data}")
+            message = client_socket.recv(1024).decode()
+            deserialized_message = pickle.loads(message)
+            if deserialized_message.type == "cbf":
+                print(f"Received CBF from client: {deserialized_message.data}")
                 global cbf
-                cbf = message.data
-            if message.type == "qbf":
-                print(f"Received QBF from client: {message.data}")
-                if cbf.check(message.data):
+                cbf = deserialized_message.data
+            if deserialized_message.type == "qbf":
+                print(f"Received QBF from client: {deserialized_message.data}")
+                if cbf.check(deserialized_message.data):
                     client_socket.send("Close contact detected".encode())
                 else:
                     client_socket.send("No contact detected".encode())
-            if message.type == "":
+            if deserialized_message.type == "":
                 continue
-            if not message:
+            if not deserialized_message:
                 break
             # print(f"Received from client: {message}")
             client_socket.send("Message received".encode())
