@@ -215,7 +215,7 @@ class DimyNode:
             # If so create a new Query Bloom Filter
             self.qbf = BloomFilter(BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
             for dbf in self.dbf_list:
-                self.qbf.add(dbf)
+                self.qbf.add(dbf.to_bytes())
     
     def send_qbf_to_server(self):  ## Task 9
         if self.qbf is None:
