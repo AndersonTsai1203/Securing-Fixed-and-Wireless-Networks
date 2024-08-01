@@ -48,6 +48,7 @@ class DimyNode:
         self.qbf = None
         self.cbf = None
         self.first = True
+        self.time_since_dbf_created = ''
 
     ### Functions ###
     def generate_ephemeral_id(self):  ### Task 1
@@ -167,17 +168,10 @@ class DimyNode:
         self.create_and_send_qbf()
 
     def can_create_new_dbf(self):  ### Task 7
-        hash_counts = {}
-        for share, hash_part, timestamp in self.received_shares:
-            if hash_part not in hash_counts:
-                hash_counts[hash_part] = []
-            hash_counts[hash_part].append((share, timestamp))
-
-        for hash_part, shares in hash_counts.items():
-            if len(shares) >= 3:
-                timestamps = [timestamp for _, timestamp in shares]
-                if max(timestamps) - min(timestamps) >= 90:
-                    return True
+        if self.time_since_dbf_created - time.time() >= 20: ##neeeds to be 90
+            return True
+        if self.bloom_count >= 6:
+            return True
         return False
 
     def create_dbf(self):  ### Task 6
@@ -204,7 +198,7 @@ class DimyNode:
 
     def can_create_new_qbf(self):  ### Task 8
         hash_counts = {}
-        for share, hash_part, timestamp in self.received_shares:
+        for share, hash_part, timestamp in self.received_data:
             if hash_part not in hash_counts:
                 hash_counts[hash_part] = []
             hash_counts[hash_part].append((share, timestamp))

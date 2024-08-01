@@ -24,6 +24,8 @@ def handle_client(client_socket):
                     client_socket.send("Close contact detected".encode())
                 else:
                     client_socket.send("No contact detected".encode())
+            if message.type == "":
+                continue
             if not message:
                 break
             # print(f"Received from client: {message}")
