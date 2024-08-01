@@ -145,9 +145,9 @@ class DimyNode:
             reconstructed_ephid_hash = hashlib.sha256(self.reconstructed_ephid).hexdigest()
             print(f"Reconstructed EphID: {self.reconstructed_ephemeral_id}")
             if reconstructed_ephid_hash == self.received_hash:
-                self.perform_ecdh()
                 print(f"Verification successful")
                 self.clear_used_shares()
+                self.perform_ecdh()
                 return
             else:
                 print(f"Verification failed")
