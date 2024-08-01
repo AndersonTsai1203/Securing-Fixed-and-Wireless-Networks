@@ -51,12 +51,12 @@ def handle_client(client_socket):
                 cbf = deserialized_message["data"]
             if deserialized_message["type"] == "qbf":
                 print(f"Received QBF from client: {deserialized_message['data']}")
-                if cbf:
+                try:
                     if cbf.check(deserialized_message["data"]):
                         client_socket.send("Close contact detected".encode())
                     else:
                         client_socket.send("No contact detected".encode())
-                else:
+                except:
                     client_socket.send("No cbf".encode())
             if deserialized_message["type"] == "":
                 continue
