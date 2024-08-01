@@ -47,7 +47,6 @@ def handle_client(client_socket):
 
             if deserialized_message["type"] == "cbf":
                 print(f"Received CBF from client: {deserialized_message['data']}")
-                global cbf
                 cbf = deserialized_message["data"]
             if deserialized_message["type"] == "qbf":
                 print(f"Received QBF from client: {deserialized_message['data']}")
