@@ -176,7 +176,7 @@ class DimyNode:
 
     def can_create_new_dbf(self):  ### Task 7
         time_elapsed = time.time() - self.time_when_dbf_created
-        if time_elapsed >= 20: ##needs to be 90
+        if time_elapsed >= 90:
             return True
         return False
 
@@ -210,11 +210,11 @@ class DimyNode:
     def can_create_new_qbf(self):  ### Task 8
         if self.time_when_qbf_created is None:
             time_elapsed = time.time() - self.time_when_dbf_created
-            if time_elapsed >= 30:  ##needs to be 540
+            if time_elapsed >= 540:
                 return True
         else:
             time_elapsed = time.time() - self.time_when_qbf_created
-            if time_elapsed >= 30:  ##needs to be 540
+            if time_elapsed >= 540:
                 return True
         return False
 
