@@ -40,7 +40,7 @@ class Attacker:
             modified_message = self.generate_random_string()
             time.sleep(5)
             sock.sendto(modified_message.encode(), ('<broadcast>', self.udp_port))
-            print(f"broadcast message: {modified_message}")
+            print(f"broadcast message: {message}")
     
     def run_replay_attack(self):
         self.perform_replay_attack()
