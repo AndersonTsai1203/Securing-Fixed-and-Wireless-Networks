@@ -1,3 +1,7 @@
+# Group Members:
+# z3449887 Xavier Smith 
+# z5237541 Tsan-Yang Tsai 
+
 ## Perform Replay Attack in UDP Broadcast with all nodes
 ## Perform Man-In-the-Middle Attack in TCP Connection with server
 import socket

@@ -1,3 +1,7 @@
+# Group Members:
+# z3449887 Xavier Smith 
+# z5237541 Tsan-Yang Tsai 
+
 import pickle
 import socket
 import threading
@@ -6,12 +10,16 @@ from BloomFilter import BloomFilter
 # Server address
 SERVER_IP = '127.0.0.1'
 SERVER_PORT = 55000
+BLOOM_FILTER_SIZE = 800000  # 100Kb = 800,000 bits
+BLOOM_FILTER_HASHES = 3
 
 # List of CBFs
 cbf_list = []
 
 # List to keep track of client connections
 clients = []
+
+
 
 def handle_client(client_socket):
     while True:
@@ -46,10 +54,10 @@ def handle_client(client_socket):
 
             # now that we've received everything, we turn it back into a python object
             deserialized_message = pickle.loads(message)
-
+            cbf = BloomFilter(BLOOM_FILTER_SIZE, BLOOM_FILTER_HASHES)
             if deserialized_message["type"] == "cbf":
                 print(f"Received CBF from client: {deserialized_message['data']}")
-                cbf = deserialized_message["data"]
+                cbf.add(deserialized_message["data"])
                 cbf_list.append(cbf)
             if deserialized_message["type"] == "qbf":
                 print(f"Received QBF from client: {deserialized_message['data']}")

@@ -1,3 +1,7 @@
+# Group Members:
+# z3449887 Xavier Smith 
+# z5237541 Tsan-Yang Tsai 
+
 import math
 import mmh3
 from bitarray import bitarray
